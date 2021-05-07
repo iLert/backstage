@@ -39,6 +39,7 @@ import { NavLink } from 'react-router-dom';
 import { GraphiQLIcon } from '@backstage/plugin-graphiql';
 import { Settings as SidebarSettings } from '@backstage/plugin-user-settings';
 import { SidebarSearch } from '@backstage/plugin-search';
+import { ILertIcon } from '@backstage/plugin-ilert';
 
 const useSidebarLogoStyles = makeStyles({
   root: {
@@ -91,6 +92,7 @@ export const Root = ({ children }: PropsWithChildren<{}>) => (
       <SidebarItem icon={RuleIcon} to="lighthouse" text="Lighthouse" />
       <SidebarItem icon={MoneyIcon} to="cost-insights" text="Cost Insights" />
       <SidebarItem icon={GraphiQLIcon} to="graphiql" text="GraphiQL" />
+      <SidebarItem icon={ILertIcon} to="ilert" text="iLert" />
       <SidebarSpace />
       <SidebarDivider />
       <SidebarSettings />

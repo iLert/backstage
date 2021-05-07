@@ -6,6 +6,8 @@ metadata:
   tags:
     - java
     - playback
+  annotations:
+    ilert.com/integration-key: il1crx0521d4e60d9d733c42ecba9e011a6d3d2427a7068b5e35
 spec:
   type: service
   lifecycle: production

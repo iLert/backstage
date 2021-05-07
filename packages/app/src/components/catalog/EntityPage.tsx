@@ -103,6 +103,10 @@ import {
   isTravisciAvailable,
 } from '@roadiehq/backstage-plugin-travis-ci';
 import { EntityCodeCoverageContent } from '@backstage/plugin-code-coverage';
+import {
+  isPluginApplicableToEntity as isILertAvailable,
+  EntityILertCard,
+} from '@backstage/plugin-ilert';
 
 const EntityLayoutWrapper = (props: { children?: ReactNode }) => {
   const [badgesDialogOpen, setBadgesDialogOpen] = useState(false);
@@ -219,6 +223,14 @@ const overviewContent = (
       <EntitySwitch.Case if={isPagerDutyAvailable}>
         <Grid item md={6}>
           <EntityPagerDutyCard />
+        </Grid>
+      </EntitySwitch.Case>
+    </EntitySwitch>
+
+    <EntitySwitch>
+      <EntitySwitch.Case if={isILertAvailable}>
+        <Grid item sm={6}>
+          <EntityILertCard />
         </Grid>
       </EntitySwitch.Case>
     </EntitySwitch>

@@ -56,6 +56,7 @@ import { Root } from './components/Root';
 import { entityPage } from './components/catalog/EntityPage';
 import { providers } from './identityProviders';
 import * as plugins from './plugins';
+import { ILertPage } from '@backstage/plugin-ilert';
 
 const app = createApp({
   apis,
@@ -133,6 +134,7 @@ const routes = (
       element={<CostInsightsLabelDataflowInstructionsPage />}
     />
     <Route path="/settings" element={<UserSettingsPage />} />
+    <Route path="/ilert" element={<ILertPage />} />
   </FlatRoutes>
 );
 
