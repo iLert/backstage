@@ -21,18 +21,8 @@ import {
   loggerServiceRef,
   schedulerServiceRef,
 } from '@backstage/backend-plugin-api';
-import { TaskScheduleDefinition } from '@backstage/backend-tasks';
 import { catalogProcessingExtensionPoint } from '@backstage/plugin-catalog-node';
-import { GitHubEntityProvider } from './providers/GitHubEntityProvider';
-
-/**
- * Options for {@link githubEntityProviderCatalogModule}.
- *
- * @alpha
- */
-export type GithubEntityProviderCatalogModuleOptions = {
-  schedule?: TaskScheduleDefinition;
-};
+import { GitHubEntityProvider } from '../providers/GitHubEntityProvider';
 
 /**
  * Registers the GitHubEntityProvider with the catalog processing extension point.
@@ -41,26 +31,20 @@ export type GithubEntityProviderCatalogModuleOptions = {
  */
 export const githubEntityProviderCatalogModule = createBackendModule({
   pluginId: 'catalog',
-  moduleId: 'github-entity-provider',
-  register(env, options?: GithubEntityProviderCatalogModuleOptions) {
+  moduleId: 'githubEntityProvider',
+  register(env) {
     env.registerInit({
       deps: {
-        config: configServiceRef,
         catalog: catalogProcessingExtensionPoint,
+        config: configServiceRef,
         logger: loggerServiceRef,
         scheduler: schedulerServiceRef,
       },
-      async init({ config, catalog, logger, scheduler }) {
-        const scheduleDef = options?.schedule ?? {
-          frequency: { seconds: 600 },
-          timeout: { seconds: 900 },
-          initialDelay: { seconds: 3 },
-        };
-
+      async init({ catalog, config, logger, scheduler }) {
         catalog.addEntityProvider(
           GitHubEntityProvider.fromConfig(config, {
             logger: loggerToWinstonLogger(logger),
-            schedule: scheduler.createScheduledTaskRunner(scheduleDef),
+            scheduler,
           }),
         );
       },
