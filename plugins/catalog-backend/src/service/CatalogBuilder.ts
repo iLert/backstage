@@ -430,11 +430,7 @@ export class CatalogBuilder {
       parser,
       policy,
     });
-    const stitcher = new Stitcher(dbClient, logger);
-    const unauthorizedEntitiesCatalog = new DefaultEntitiesCatalog(
-      dbClient,
-      stitcher,
-    );
+    const unauthorizedEntitiesCatalog = new DefaultEntitiesCatalog(dbClient);
 
     let permissionEvaluator: PermissionEvaluator;
     if ('authorizeConditional' in permissions) {
@@ -478,6 +474,7 @@ export class CatalogBuilder {
       permissions: catalogPermissions,
       rules: this.permissionRules,
     });
+    const stitcher = new Stitcher(dbClient, logger);
 
     const locationStore = new DefaultLocationStore(dbClient);
     const configLocationProvider = new ConfigLocationEntityProvider(config);

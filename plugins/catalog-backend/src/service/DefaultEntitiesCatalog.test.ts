@@ -25,15 +25,12 @@ import {
   DbRefreshStateRow,
   DbSearchRow,
 } from '../database/tables';
-import { Stitcher } from '../stitching/Stitcher';
 import { DefaultEntitiesCatalog } from './DefaultEntitiesCatalog';
 
 describe('DefaultEntitiesCatalog', () => {
   const databases = TestDatabases.create({
     ids: ['POSTGRES_13', 'POSTGRES_9', 'SQLITE_3'],
   });
-  const stitch = jest.fn();
-  const stitcher: Stitcher = { stitch } as any;
 
   async function createDatabase(databaseId: TestDatabaseId) {
     const knex = await databases.init(databaseId);
@@ -125,10 +122,6 @@ describe('DefaultEntitiesCatalog', () => {
     );
   }
 
-  afterEach(() => {
-    jest.resetAllMocks();
-  });
-
   describe('entityAncestry', () => {
     it.each(databases.eachSupportedId())(
       'should return the ancestry with one parent, %p',
@@ -158,7 +151,7 @@ describe('DefaultEntitiesCatalog', () => {
         await addEntity(knex, parent, [{ entity: grandparent }]);
         await addEntity(knex, root, [{ entity: parent }]);
 
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
         const result = await catalog.entityAncestry('k:default/root');
         expect(result.rootEntityRef).toEqual('k:default/root');
 
@@ -188,7 +181,7 @@ describe('DefaultEntitiesCatalog', () => {
       'should throw error if the entity does not exist, %p',
       async databaseId => {
         const { knex } = await createDatabase(databaseId);
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
         await expect(() =>
           catalog.entityAncestry('k:default/root'),
         ).rejects.toThrow('No such entity k:default/root');
@@ -231,7 +224,7 @@ describe('DefaultEntitiesCatalog', () => {
         await addEntity(knex, parent2, [{ entity: grandparent }]);
         await addEntity(knex, root, [{ entity: parent1 }, { entity: parent2 }]);
 
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
         const result = await catalog.entityAncestry('k:default/root');
         expect(result.rootEntityRef).toEqual('k:default/root');
 
@@ -287,7 +280,7 @@ describe('DefaultEntitiesCatalog', () => {
         };
         await addEntityToSearch(knex, entity1);
         await addEntityToSearch(knex, entity2);
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         const testFilter = {
           key: 'spec.test',
@@ -320,7 +313,7 @@ describe('DefaultEntitiesCatalog', () => {
         };
         await addEntityToSearch(knex, entity1);
         await addEntityToSearch(knex, entity2);
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         const testFilter = {
           not: {
@@ -367,7 +360,7 @@ describe('DefaultEntitiesCatalog', () => {
         await addEntityToSearch(knex, entity2);
         await addEntityToSearch(knex, entity3);
         await addEntityToSearch(knex, entity4);
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         const testFilter1 = {
           key: 'metadata.org',
@@ -422,7 +415,7 @@ describe('DefaultEntitiesCatalog', () => {
         };
         await addEntityToSearch(knex, entity1);
         await addEntityToSearch(knex, entity2);
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         const testFilter1 = {
           key: 'metadata.org',
@@ -464,7 +457,7 @@ describe('DefaultEntitiesCatalog', () => {
         };
         await addEntityToSearch(knex, entity1);
         await addEntityToSearch(knex, entity2);
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         const testFilter = {
           key: 'kind',
@@ -508,7 +501,7 @@ describe('DefaultEntitiesCatalog', () => {
           },
           [],
         );
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         const { entities } = await catalog.entities();
 
@@ -564,16 +557,10 @@ describe('DefaultEntitiesCatalog', () => {
           metadata: { name: 'root' },
           spec: {},
         };
-        const unrelated1: Entity = {
+        const unrelated: Entity = {
           apiVersion: 'a',
           kind: 'k',
-          metadata: { name: 'unrelated1' },
-          spec: {},
-        };
-        const unrelated2: Entity = {
-          apiVersion: 'a',
-          kind: 'k',
-          metadata: { name: 'unrelated2' },
+          metadata: { name: 'unrelated' },
           spec: {},
         };
 
@@ -584,23 +571,10 @@ describe('DefaultEntitiesCatalog', () => {
           { entity: parent1 },
           { entity: parent2 },
         ]);
-        await addEntity(knex, unrelated1, []);
-        await addEntity(knex, unrelated2, []);
+        await addEntity(knex, unrelated, []);
         await knex('refresh_state').update({ result_hash: 'not-changed' });
-        await knex('relations').insert({
-          originating_entity_id: uid,
-          type: 't',
-          source_entity_ref: 'k:default/root',
-          target_entity_ref: 'k:default/unrelated1',
-        });
-        await knex('relations').insert({
-          originating_entity_id: uid,
-          type: 't',
-          source_entity_ref: 'k:default/unrelated2',
-          target_entity_ref: 'k:default/root',
-        });
 
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
         await catalog.removeEntityByUid(uid);
 
         await expect(
@@ -612,12 +586,8 @@ describe('DefaultEntitiesCatalog', () => {
           { entity_ref: 'k:default/grandparent', result_hash: 'not-changed' },
           { entity_ref: 'k:default/parent1', result_hash: 'child-was-deleted' },
           { entity_ref: 'k:default/parent2', result_hash: 'child-was-deleted' },
-          { entity_ref: 'k:default/unrelated1', result_hash: 'not-changed' },
-          { entity_ref: 'k:default/unrelated2', result_hash: 'not-changed' },
+          { entity_ref: 'k:default/unrelated', result_hash: 'not-changed' },
         ]);
-        expect(stitch).toHaveBeenCalledWith(
-          new Set(['k:default/unrelated1', 'k:default/unrelated2']),
-        );
       },
     );
   });
@@ -646,7 +616,7 @@ describe('DefaultEntitiesCatalog', () => {
           metadata: { name: 'two' },
           spec: {},
         });
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         await expect(catalog.facets({ facets: ['kind'] })).resolves.toEqual({
           facets: {
@@ -684,7 +654,7 @@ describe('DefaultEntitiesCatalog', () => {
           },
           spec: {},
         });
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         await expect(
           catalog.facets({
@@ -728,7 +698,7 @@ describe('DefaultEntitiesCatalog', () => {
           },
           spec: {},
         });
-        const catalog = new DefaultEntitiesCatalog(knex, stitcher);
+        const catalog = new DefaultEntitiesCatalog(knex);
 
         await expect(
           catalog.facets({
